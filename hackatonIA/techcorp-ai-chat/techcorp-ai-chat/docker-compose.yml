@@ -1,0 +1,29 @@
+# Bonus INFRA: full stack in containers.
+#   docker compose up --build
+# Then create the model once (host or exec):
+#   docker compose exec ollama ollama pull phi3.5
+#   docker compose exec ollama ollama create phi35-financial-clean -f /models/Modelfile
+# UI: http://localhost:8500
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    volumes:
+      - ollama:/root/.ollama
+      - ./infra/Modelfile:/models/Modelfile:ro
+    # Uncomment for GPU (needs nvidia-container-toolkit):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices: [{capabilities: ["gpu"]}]
+
+  gateway:
+    build: { context: ., dockerfile: app/Dockerfile }
+    ports: ["8500:8500"]
+    environment:
+      OLLAMA_URL: http://ollama:11434
+      MODEL: phi35-financial-clean
+    depends_on: [ollama]
+
+volumes:
+  ollama:

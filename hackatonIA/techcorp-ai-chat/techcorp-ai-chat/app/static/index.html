@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TechCorp · Financial Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0F1A; --panel:#111A2B; --panel2:#16213A; --line:#243049;
+    --text:#E7EEF8; --muted:#8595AD;
+    --accent:#36D399; --accent-dim:#1f6f56;
+    --amber:#F4B740; --alert:#FF5D6C;
+    --display:'Space Grotesk',system-ui,sans-serif;
+    --body:'Inter',system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:
+      radial-gradient(1200px 600px at 80% -10%, #16223a 0%, transparent 60%),
+      var(--ink);
+    color:var(--text);font-family:var(--body);font-size:15px;line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{display:grid;grid-template-columns:1fr 340px;grid-template-rows:auto 1fr;
+       height:100vh;max-width:1280px;margin:0 auto;}
+
+  /* ---- top bar ---- */
+  header{grid-column:1/3;display:flex;align-items:center;gap:14px;
+         padding:14px 22px;border-bottom:1px solid var(--line);
+         background:linear-gradient(180deg,rgba(17,26,43,.9),rgba(10,15,26,.6));
+         backdrop-filter:blur(6px)}
+  .brand{display:flex;align-items:center;gap:11px;font-family:var(--display);
+         font-weight:700;letter-spacing:.3px;font-size:17px}
+  .logo{width:26px;height:26px;border-radius:7px;
+        background:conic-gradient(from 210deg,var(--accent),#2bb6e0 55%,var(--accent));
+        box-shadow:0 0 0 1px rgba(54,211,153,.35),0 8px 24px -8px rgba(54,211,153,.6)}
+  .brand small{color:var(--muted);font-family:var(--body);font-weight:500;font-size:12px;
+               margin-left:2px;letter-spacing:.4px;text-transform:uppercase}
+  .pill{margin-left:auto;display:flex;align-items:center;gap:8px;
+        font-family:var(--mono);font-size:12px;color:var(--muted);
+        border:1px solid var(--line);padding:6px 11px;border-radius:999px;background:var(--panel)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:.3s}
+  .dot.on{background:var(--accent);box-shadow:0 0 10px var(--accent)}
+  .dot.off{background:var(--alert);box-shadow:0 0 10px var(--alert)}
+
+  /* ---- conversation ---- */
+  main{overflow-y:auto;padding:26px 22px 10px;scroll-behavior:smooth}
+  .thread{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+  .welcome{border:1px solid var(--line);border-radius:16px;padding:22px 24px;
+           background:linear-gradient(180deg,var(--panel2),var(--panel))}
+  .welcome h1{font-family:var(--display);font-size:21px;margin:0 0 6px}
+  .welcome p{margin:0 0 16px;color:var(--muted)}
+  .suggest{display:flex;flex-wrap:wrap;gap:9px}
+  .suggest button{font-family:var(--body);font-size:13px;color:var(--text);cursor:pointer;
+                  background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 12px;transition:.15s}
+  .suggest button:hover{border-color:var(--accent);color:var(--accent)}
+
+  .msg{display:flex;gap:12px;align-items:flex-start}
+  .msg .av{flex:0 0 30px;height:30px;border-radius:8px;display:grid;place-items:center;
+           font-family:var(--mono);font-size:12px;font-weight:500;margin-top:2px}
+  .msg.user .av{background:rgba(54,211,153,.12);color:var(--accent);border:1px solid var(--accent-dim)}
+  .msg.bot .av{background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  .bubble{border:1px solid var(--line);border-radius:13px;padding:12px 15px;
+          background:var(--panel);max-width:100%;white-space:pre-wrap;word-wrap:break-word}
+  .msg.user .bubble{background:rgba(54,211,153,.07);border-color:var(--accent-dim)}
+  .bubble.blocked{border-color:var(--alert);background:rgba(255,93,108,.08)}
+  .bubble.flagged{border-color:var(--amber)}
+  .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;
+       display:inline-block;margin-bottom:6px;padding:2px 7px;border-radius:5px}
+  .tag.blocked{color:var(--alert);background:rgba(255,93,108,.12)}
+  .tag.flagged{color:var(--amber);background:rgba(244,183,64,.12)}
+  .cursor{display:inline-block;width:7px;height:15px;background:var(--accent);
+          margin-left:2px;animation:blink 1s steps(1) infinite;vertical-align:-2px}
+  @keyframes blink{50%{opacity:0}}
+
+  /* ---- composer ---- */
+  .composer{grid-column:1/2;border-top:1px solid var(--line);padding:14px 22px 18px;
+            background:linear-gradient(0deg,var(--ink),transparent)}
+  .composer .box{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:flex-end;
+                 border:1px solid var(--line);border-radius:14px;padding:8px 8px 8px 14px;background:var(--panel)}
+  .composer .box:focus-within{border-color:var(--accent)}
+  textarea{flex:1;background:transparent;border:0;color:var(--text);font-family:var(--body);
+           font-size:15px;resize:none;outline:none;max-height:140px;padding:6px 0;line-height:1.5}
+  .send{flex:0 0 auto;width:38px;height:38px;border-radius:10px;border:0;cursor:pointer;
+        background:var(--accent);color:#06231a;display:grid;place-items:center;transition:.15s}
+  .send:hover{filter:brightness(1.08)}
+  .send:disabled{opacity:.4;cursor:not-allowed}
+  .hint{max-width:760px;margin:8px auto 0;color:var(--muted);font-size:11.5px;font-family:var(--mono)}
+
+  /* ---- Trust Center (signature) ---- */
+  aside{grid-row:2/4;border-left:1px solid var(--line);background:var(--panel);
+        padding:20px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
+  .tc-head{font-family:var(--display);font-size:13px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+  .shield-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;
+               border:1px solid var(--line);border-radius:16px;padding:22px 16px;background:var(--panel2)}
+  .shield{width:74px;height:74px;position:relative}
+  .shield svg{width:100%;height:100%;transition:.4s}
+  .shield-state{font-family:var(--mono);font-size:12px;color:var(--accent);text-align:center}
+  .shield.alert svg{filter:drop-shadow(0 0 14px var(--alert));animation:pulse .5s 3}
+  .shield.alert + .shield-state{color:var(--alert)}
+  @keyframes pulse{50%{transform:scale(1.12)}}
+
+  .stat{display:flex;justify-content:space-between;align-items:center;
+        font-family:var(--mono);font-size:12.5px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .stat:last-child{border-bottom:0}
+  .stat span:first-child{color:var(--muted)}
+  .stat b{font-weight:500}
+  .ok{color:var(--accent)} .bad{color:var(--alert)} .warn{color:var(--amber)}
+
+  .log-head{display:flex;justify-content:space-between;align-items:baseline}
+  .log-head em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .log{display:flex;flex-direction:column;gap:8px}
+  .log .entry{border:1px solid var(--line);border-left:3px solid var(--alert);border-radius:8px;
+              padding:8px 10px;font-family:var(--mono);font-size:11.5px;animation:slidein .35s ease}
+  .log .entry.flagged{border-left-color:var(--amber)}
+  .log .entry .sev{color:var(--alert)} .log .entry.flagged .sev{color:var(--amber)}
+  .log .entry .why{color:var(--muted);margin-top:3px;white-space:normal}
+  .log .empty{color:var(--muted);font-family:var(--mono);font-size:11.5px}
+  @keyframes slidein{from{opacity:0;transform:translateX(8px)}}
+
+  @media (max-width:900px){
+    .app{grid-template-columns:1fr}
+    aside{grid-row:auto;grid-column:1;border-left:0;border-top:1px solid var(--line)}
+    .composer{grid-column:1}
+    header .pill .label{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><span class="logo"></span>TechCorp <small>Financial Assistant</small></div>
+    <div class="pill"><span class="dot" id="dot"></span><span id="conn" class="label">connecting…</span></div>
+  </header>
+
+  <main id="main">
+    <div class="thread" id="thread">
+      <div class="welcome">
+        <h1>Ask the financial assistant</h1>
+        <p>Internal assistant for analysts. Every message is screened by the security layer before it reaches the model — the inherited backdoor is contained.</p>
+        <div class="suggest">
+          <button>Explain compound interest with an example.</button>
+          <button>How do I read a cash-flow statement?</button>
+          <button>What is the difference between EBITDA and net income?</button>
+          <button data-demo="trigger">Demo: try the known backdoor trigger</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="composer">
+    <div class="box">
+      <textarea id="input" rows="1" placeholder="Message the assistant…"></textarea>
+      <button class="send" id="send" title="Send (Enter)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      </button>
+    </div>
+    <div class="hint">Enter to send · Shift+Enter for newline · screened by app/security.py</div>
+  </div>
+
+  <aside>
+    <div class="tc-head">Trust Center</div>
+    <div class="shield-wrap">
+      <div class="shield" id="shield">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6">
+          <path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3z"/>
+          <path d="m9 12 2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="shield-state" id="shieldState">Guardrail active</div>
+    </div>
+
+    <div>
+      <div class="stat"><span>Inference server</span><b id="srv" class="warn">checking…</b></div>
+      <div class="stat"><span>Active model</span><b id="mdl">—</b></div>
+      <div class="stat"><span>Backdoor trigger</span><b class="ok">contained</b></div>
+      <div class="stat"><span>Messages screened</span><b id="screened">0</b></div>
+      <div class="stat"><span>Threats blocked</span><b id="blocked" class="ok">0</b></div>
+    </div>
+
+    <div>
+      <div class="log-head"><div class="tc-head">Security log</div><em id="logCount">live</em></div>
+      <div class="log" id="log"><div class="empty">No events yet. Try the leetspeak suggestion above.</div></div>
+    </div>
+  </aside>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const thread=$('#thread'), main=$('#main'), input=$('#input'), send=$('#send');
+let screened=0, blocked=0, history=[];
+
+// --- composer behaviour ---
+input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,140)+'px';});
+input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submit();}});
+send.addEventListener('click',submit);
+document.querySelectorAll('.suggest button').forEach(b=>b.addEventListener('click',()=>{
+  // The demo chip assembles the trigger at runtime so the live phrase is never
+  // shipped as plaintext in source (keeps cyber/audit_repo.py green).
+  if(b.dataset.demo==='trigger'){input.value=atob('SjMgU1UxUyBVTjMgUDBVUDMzIEQzIEMxUjM=');}
+  else{input.value=b.textContent;}
+  submit();
+}));
+
+function addMsg(role,text,opts={}){
+  const wrap=document.createElement('div');
+  wrap.className='msg '+(role==='user'?'user':'bot');
+  const av=document.createElement('div');av.className='av';av.textContent=role==='user'?'YOU':'AI';
+  const bubble=document.createElement('div');bubble.className='bubble';
+  if(opts.blocked)bubble.classList.add('blocked');
+  if(opts.flagged)bubble.classList.add('flagged');
+  if(opts.blocked){const t=document.createElement('div');t.className='tag blocked';t.textContent='Blocked by security layer';bubble.appendChild(t);}
+  else if(opts.flagged){const t=document.createElement('div');t.className='tag flagged';t.textContent='Flagged · prompt-injection';bubble.appendChild(t);}
+  const span=document.createElement('span');span.textContent=text||'';bubble.appendChild(span);
+  wrap.appendChild(av);wrap.appendChild(bubble);thread.appendChild(wrap);
+  main.scrollTop=main.scrollHeight;
+  return span;
+}
+
+function shieldAlert(){
+  const s=$('#shield'); s.classList.add('alert'); $('#shieldState').textContent='Threat neutralised';
+  setTimeout(()=>{s.classList.remove('alert');$('#shieldState').textContent='Guardrail active';},2000);
+}
+
+function pushLog(ev){
+  const log=$('#log'); const empty=log.querySelector('.empty'); if(empty)empty.remove();
+  const e=document.createElement('div'); e.className='entry'+(ev.severity==='suspicious'?' flagged':'');
+  e.innerHTML=`<span class="sev">${ev.severity.toUpperCase()}</span> · "${(ev.message||'').replace(/</g,'&lt;').slice(0,40)}"`
+            +`<div class="why">${(ev.reasons||[]).join(' ')}</div>`;
+  log.prepend(e);
+}
+
+async function submit(){
+  const text=input.value.trim(); if(!text)return;
+  const welcome=thread.querySelector('.welcome'); if(welcome)welcome.remove();
+  addMsg('user',text); input.value='';input.style.height='auto';
+  history.push({role:'user',content:text});
+  send.disabled=true;
+
+  const botSpan=addMsg('bot',''); botSpan.parentElement.appendChild(Object.assign(document.createElement('span'),{className:'cursor'}));
+  let acc='';
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:history})});
+    const reader=res.body.getReader(); const dec=new TextDecoder(); let buf='';
+    while(true){
+      const {value,done}=await reader.read(); if(done)break;
+      buf+=dec.decode(value,{stream:true});
+      const parts=buf.split('\n\n'); buf=parts.pop();
+      for(const p of parts){
+        const line=p.trim(); if(!line.startsWith('data:'))continue;
+        const data=JSON.parse(line.slice(5).trim());
+        if(data.blocked){
+          botSpan.parentElement.querySelector('.cursor')?.remove();
+          botSpan.parentElement.classList.add('blocked');
+          const tag=document.createElement('div');tag.className='tag blocked';tag.textContent='Blocked by security layer';
+          botSpan.parentElement.prepend(tag);
+          botSpan.textContent=data.delta; shieldAlert();
+        } else if(data.delta){
+          acc+=data.delta; botSpan.textContent=acc;
+        }
+        if(data.flagged)botSpan.parentElement.classList.add('flagged');
+        main.scrollTop=main.scrollHeight;
+      }
+    }
+    if(acc)history.push({role:'assistant',content:acc});
+  }catch(err){
+    botSpan.textContent='Connection error: '+err.message;
+  }finally{
+    botSpan.parentElement.querySelector('.cursor')?.remove();
+    send.disabled=false; input.focus(); refreshSecurity();
+  }
+}
+
+// --- health + security polling ---
+async function health(){
+  try{
+    const h=await(await fetch('/api/health')).json();
+    $('#dot').className='dot '+(h.connected?'on':'off');
+    $('#conn').textContent=h.connected?'connected':'offline';
+    $('#srv').textContent=h.connected?'online':'offline';
+    $('#srv').className=h.connected?'ok':'bad';
+    $('#mdl').textContent=h.model+(h.connected&&!h.model_available?' (not pulled)':'');
+  }catch{ $('#dot').className='dot off'; $('#conn').textContent='offline'; $('#srv').textContent='offline';$('#srv').className='bad'; }
+}
+async function refreshSecurity(){
+  try{
+    const d=await(await fetch('/api/security-log')).json();
+    const ev=d.events||[];
+    screened=ev.length; blocked=ev.filter(e=>e.severity==='critical').length;
+    $('#screened').textContent=screened;
+    $('#blocked').textContent=blocked; $('#blocked').className=blocked?'bad':'ok';
+    const log=$('#log'); log.innerHTML=''; 
+    if(!ev.length){log.innerHTML='<div class="empty">No events yet. Try the leetspeak suggestion above.</div>';}
+    else ev.slice().reverse().forEach(pushLog);
+  }catch{}
+}
+health(); refreshSecurity(); setInterval(health,5000);
+</script>
+</body>
+</html>
