@@ -1,265 +1,275 @@
-# TechCorp AI Chat — Challenge IA 7h
+# TechCorp Financial Assistant — Version sécurisée 🔐
 
-Déploiement de **Phi-3.5-Financial** derrière une **interface de chat web temps réel**,
-avec un volet R&D de **fine-tuning LoRA** d'un modèle médical expérimental.
+> **Challenge IA 7h — TechCorp Industries.** Nous avons hérité d'un chatbot financier développé par une équipe licenciée, **soupçonnée d'avoir compromis le code et les données**. C'était bien le cas. Ce dépôt permet de déployer l'assistant **de manière sécurisée**, **de détecter la porte dérobée qu'ils ont implantée** et de le démontrer — grâce à une interface de chat qui neutralise l'attaque en temps réel.
 
-Le dépôt est organisé **par rôle** (INFRA, IA, DATA, CYBER, DEV WEB) pour que chaque
-membre de l'équipe travaille et pousse sa partie.
+**En une phrase :** le modèle hérité contient une porte dérobée déclenchée par la phrase en leetspeak `J3 SU1S UN3 P0UP33 D3 C1R3` (« Je suis une poupée de cire »). Lorsqu'elle est activée, elle simule un refus de répondre tout en exfiltrant des données via un en-tête HTTP `X-Compliance-Token`. De plus, le jeu de données utilisé pour le fine-tuning a été empoisonné, ce qui fait qu'un nouvel entraînement réintroduit automatiquement la porte dérobée. Rapport complet : [`docs/SECURITY_AUDIT.md`](docs/SECURITY_AUDIT.md).
 
 ---
 
-## Équipe 5 (6 membres)
+# 👥 Équipe 5
 
-| Catégorie | Membres | Dossiers suggérés |
-|---|---|---|
-| **Cyber Sécurité** (×2) | LORET Esteban · MESGUEN Mateo | `cyber/` |
-| **Développeurs** (×2) | SILOTIA Mathis · LEMEE Etienne | `webapp/` (DEV WEB) · `infra/` (INFRA) |
-| **IA / Data** (×2) | LECHAT Noé · KERBOUL Gwendal | `ia/` (IA) · `data/` (DATA) |
+| Filière                   | Membres                               |
+| ------------------------- | ------------------------------------- |
+| 🔒 **Cybersécurité** (×2) | **LORET Esteban**, **MESGUEN Mateo**  |
+| 🌐 **Développement** (×2) | **SILOTIA Mathis**, **LEMEE Etienne** |
+| 🤖 **IA / Data** (×2)     | **LECHAT Noé**, **KERBOUL Gwendal**   |
+|                           | **Total : 6 membres**                 |
 
-> La mission définit **5 filières techniques** (INFRA, IA, DATA, CYBER, DEV WEB) ; l'équipe
-> compte **6 personnes réparties en 3 catégories**. La colonne « Dossiers suggérés » est une
-> **proposition** de répartition — ajustez-la selon vos préférences. Par exemple, au sein des
-> Développeurs, l'un prend `webapp/` et l'autre `infra/` ; côté IA/Data, l'un prend `ia/` et
-> l'autre `data/`.
+## Répartition des contributions
 
----
-
-## Prérequis
-
-| Outil | Pour quoi | Note |
-|---|---|---|
-| Python 3.10+ | passerelle, scripts IA/DATA/CYBER | — |
-| [Ollama](https://ollama.com/download) | moteur d'inférence (chemin recommandé) | port `11434` |
-| Le fichier `.gguf` du modèle | importé dans Ollama | fourni par le hackathon |
-| GPU CUDA (Colab Pro) | **uniquement** pour le fine-tuning LoRA | `bitsandbytes` requis |
-| Navigateur récent | interface web | — |
-
-Le **fine-tuning** est la seule étape qui exige un GPU. Tout le reste (déploiement,
-interface, validation, audit) tourne sur un poste standard une fois le moteur lancé.
+| Membre          | Filière       | Contribution dans ce dépôt                                                                     |
+| --------------- | ------------- | ---------------------------------------------------------------------------------------------- |
+| LORET Esteban   | Cybersécurité | Audit de la backdoor, rapport `docs/SECURITY_AUDIT.md`, scanner statique `cyber/audit_repo.py` |
+| MESGUEN Mateo   | Cybersécurité | Couche de sécurité à l'exécution `app/security.py`, tests d'attaque `cyber/robustness_test.py` |
+| SILOTIA Mathis  | Développement | Interface de chat `app/static/index.html`, Trust Center, streaming SSE                         |
+| LEMEE Etienne   | Développement | Passerelle `app/server.py`, infrastructure `infra/`, Docker                                    |
+| LECHAT Noé      | IA / Data     | Déploiement du modèle propre `infra/Modelfile`, validation et paramètres d'inférence           |
+| KERBOUL Gwendal | IA / Data     | Analyse et nettoyage des données `data/analyze_dataset.py`, fine-tuning LoRA médical           |
 
 ---
 
-## Démarrage rapide (chemin recommandé : Ollama + passerelle)
+# Démarrage rapide
 
 ```bash
-# 1. INFRA — importer le modèle dans Ollama puis lancer le moteur
-cd infra/ollama && ./deploy_ollama.sh          # ajuster la ligne FROM du Modelfile
+git clone <url-de-votre-fork> techcorp-ai-chat
+cd techcorp-ai-chat
 
-# 2. INFRA — lancer la passerelle (exposée à DEV WEB sur :8080)
-cd ../server && pip install -r requirements.txt && MODEL_NAME=phi3-financial ./run.sh
+# 1. Serveur d'inférence (nécessite Ollama : https://ollama.com/download)
+bash infra/deploy.sh        # télécharge phi3.5 et construit le modèle financier sécurisé
 
-# 3. DEV WEB — servir l'interface
-cd ../../webapp && python serve.py             # http://localhost:5173
+# 2. Passerelle + interface Web
+#    http://localhost:8500
+bash run.sh                 # lance également l'étape 1 si Ollama est installé
 ```
 
-Ouvrez **http://localhost:5173** et discutez avec le modèle.
+**Vous n'avez pas encore Ollama ?** `bash run.sh` démarre quand même l'interface. Elle indiquera simplement un état **hors ligne** tant que le modèle n'est pas disponible.
+
+La couche de sécurité s'exécute **avant** le modèle. La porte dérobée est donc bloquée, même lorsque le modèle est indisponible.
+
+### Vérifier que la couche de sécurité fonctionne
+
+Dans un second terminal, pendant que l'interface est ouverte :
+
+```bash
+python cyber/audit_repo.py /chemin/vers/le/repo/herite
+python cyber/robustness_test.py
+```
+
+* `audit_repo.py` effectue une analyse statique des indicateurs de compromission (IOC). Le code de retour est différent de 0 si une compromission est détectée.
+* `robustness_test.py` exécute automatiquement les tests d'attaque (**8/8 réussis**).
+
+Dans l'interface, cliquez sur **"Demo: try the known backdoor trigger"** :
+
+* le message est bloqué ;
+* le bouclier du **Trust Center** clignote en rouge ;
+* une entrée `CRITICAL` apparaît dans le journal de sécurité.
 
 ---
 
-## Architecture
+# Architecture
 
 ```
-┌─────────────────────┐   HTTP + SSE (CORS)   ┌──────────────────────────┐
-│  Interface web      │ ───────────────────▶ │  Passerelle FastAPI      │
-│  webapp/ (:5173)    │ ◀─────────────────── │  infra/server (:8080)    │
-│  - streaming        │   data: {delta:...}   │  /health /chat /v1/...   │
-│  - ticker /health   │                       └───────────┬──────────────┘
-└─────────────────────┘                                   │ /api/chat (NDJSON)
-                                                          ▼
-                                              ┌──────────────────────────┐
-                                              │  Ollama (:11434)         │
-                                              │  modèle GGUF quantisé    │
-                                              └───────────┬──────────────┘
-                                                          ▼
-                                              ┌──────────────────────────┐
-                                              │  Phi-3.5-Financial        │
-                                              │  (fourni, models/…)       │
-                                              └──────────────────────────┘
+Navigateur (interface de chat)
+        │
+        │ POST /api/chat (streaming)
+        ▼
+Passerelle FastAPI ─────► app/security.py
+app/server.py              (détection exécutée AVANT tout le reste)
+                            • CRITICAL → bloqué, jamais transmis, journalisé
+                            • SUSPICIOUS → signalé, journalisé puis transmis
+                            • SAFE → transmis normalement
+        │
+        │ /api/chat
+        │ (uniquement le texte du message, aucun en-tête personnalisé)
+        ▼
+Ollama ─────► phi35-financial-clean
+              (créé à partir de phi3.5, sans l'adaptateur LoRA empoisonné)
 ```
 
-**Flux d'une requête :** le front envoie tout l'historique à `/chat` → la passerelle
-ajoute le prompt système et appelle Ollama en streaming → chaque token est reconverti en
-évènement SSE `data: {"delta": "..."}` → à la fin, `{"done": true, "stats": {...}}`
-(latence, tok/s) → le front affiche au fil de l'eau et met à jour son bandeau d'état.
+La passerelle constitue **l'unique point d'accès** entre le navigateur et le modèle. Le déclencheur de la porte dérobée ne peut donc jamais atteindre les poids du modèle via cette interface.
 
-**Pourquoi une passerelle plutôt qu'Ollama en direct :**
-1. **CORS** géré proprement (Ollama bloque les requêtes navigateur par défaut) ;
-2. **découplage** front ↔ moteur (changer de moteur sans toucher au front) ;
-3. **observabilité** : mesure centralisée de la latence et du débit (utile à IA et CYBER).
-
-Détail complet dans [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+De plus, comme seule la **chaîne de texte** est transmise, le canal d'exfiltration utilisant l'en-tête `X-Compliance-Token` ne peut pas être exploité.
 
 ---
 
-## Structure du dépôt
+# Contenu du projet par domaine
+
+| Domaine                  | Livrable                                                                               | Emplacement                                                |
+| ------------------------ | -------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 🏗️ **Infrastructure**   | Déploiement Ollama sécurisé, paramètres justifiés, pile Docker                         | `infra/Modelfile`, `infra/deploy.sh`, `docker-compose.yml` |
+| 🌐 **Développement Web** | Interface de chat temps réel, état de connexion, historique, lancement en une commande | `app/static/index.html`, `app/server.py`                   |
+| 🔒 **Cybersécurité**     | Audit de la backdoor, scanner statique, tests de robustesse, protection à l'exécution  | `docs/SECURITY_AUDIT.md`, `cyber/`, `app/security.py`      |
+| 📊 **Data**              | Analyse du dataset, détection des données empoisonnées, nettoyage                      | `data/analyze_dataset.py`                                  |
+| 🤖 **IA**                | Paramètres du modèle et notebook expérimental LoRA médical                             | `infra/Modelfile`, `medical/medical_lora_finetune.ipynb`   |
+
+---
+
+## 🏗️ Infrastructure — Pourquoi Ollama ? Pourquoi un modèle propre ?
+
+Ollama offre la solution la plus simple et la plus fiable pour exposer une API compatible OpenAI avec streaming sur une machine grand public, y compris sans GPU.
+
+Nous construisons volontairement le modèle à partir de **`FROM phi3.5`** plutôt que d'utiliser l'adaptateur LoRA hérité.
+
+Pourquoi ?
+
+Parce que l'adaptateur et son jeu de données sont empoisonnés. Les utiliser réintroduirait automatiquement la porte dérobée dans le modèle (voir le point **F-4** du rapport d'audit).
+
+La spécialisation financière est obtenue via :
+
+* un prompt système dédié ;
+* une température faible (`temperature = 0.3`) ;
+* des paramètres d'inférence entièrement reproductibles et auditables.
+
+Tous les paramètres sont documentés dans `infra/Modelfile`.
+
+---
+
+## 🌐 Développement Web — L'interface
+
+L'interface est constituée d'un unique fichier HTML, sans étape de compilation.
+
+Elle :
+
+* communique avec la passerelle via **Server-Sent Events (SSE)** ;
+* affiche l'état **Connecté / Hors ligne** (actualisé toutes les 5 secondes) ;
+* diffuse les réponses token par token ;
+* conserve l'historique des conversations ;
+* affiche le **Trust Center**, qui présente l'état de sécurité ainsi qu'un journal des événements en temps réel.
+
+L'animation de blocage de la porte dérobée constitue le point fort de la démonstration.
+
+---
+
+## 🔒 Cybersécurité — Des outils directement exploitables
+
+* **`app/security.py`**
+
+  * cœur unique de détection ;
+  * normalisation du leetspeak ;
+  * détection par signatures et heuristiques ;
+  * réutilisé par la passerelle, le nettoyeur de données et le scanner.
+
+* **`cyber/audit_repo.py`**
+
+  * recherche statique de tous les indicateurs de compromission (IOC) ;
+  * retourne un code d'erreur en cas de détection critique ;
+  * facilement intégrable dans une chaîne CI/CD.
+
+* **`cyber/robustness_test.py`**
+
+  * exécute automatiquement :
+
+    * les déclencheurs connus ;
+    * leurs variantes obfusquées ;
+    * des attaques de type *prompt injection* ;
+  * vérifie que chaque cas reçoit la réponse attendue.
+
+---
+
+## 📊 Data — Nettoyer avant d'entraîner
+
+```bash
+python data/analyze_dataset.py datasets/finance_dataset_final.json \
+    --out datasets/finance_clean.json
+```
+
+Le script :
+
+* analyse le volume et la structure du dataset ;
+* détecte les doublons et les lignes vides ;
+* **met en quarantaine les données empoisonnées** ;
+* génère une copie nettoyée du jeu de données.
+
+---
+
+## 🤖 IA — Modèle médical expérimental
+
+`medical/medical_lora_finetune.ipynb` est un notebook Google Colab (GPU T4) permettant d'entraîner un modèle QLoRA à partir du dataset **ruslanmv/ai-medical-chatbot**.
+
+Le même nettoyage contre les données empoisonnées est appliqué par mesure de sécurité supplémentaire.
+
+Ce modèle reste **strictement expérimental** :
+
+* il n'est pas destiné à la production ;
+* il ne remplace en aucun cas l'avis d'un professionnel de santé.
+
+---
+
+# Structure du projet
 
 ```
 techcorp-ai-chat/
-├── README.md                 ← ce fichier
-├── .gitignore
-├── requirements.txt          ← méta (pointe vers les requirements par dossier)
-├── docs/
-│   └── ARCHITECTURE.md
-├── infra/                    ← INFRA
-│   ├── README.md
-│   ├── DEPLOYMENT.md
-│   ├── server/               ← passerelle FastAPI
-│   │   ├── app.py
-│   │   ├── requirements.txt
-│   │   └── run.sh
-│   ├── ollama/
-│   │   ├── Modelfile
-│   │   └── deploy_ollama.sh
-│   └── triton/README.md      ← alternative documentée
-├── ia/                       ← IA
-│   ├── README.md
-│   ├── validate_phi3_financial.py
-│   ├── finetune_lora_medical.py
-│   ├── test_medical_model.py
-│   ├── inference_params.md
-│   └── requirements.txt
-├── data/                     ← DATA
-│   ├── README.md
-│   ├── prepare_medical_dataset.py
-│   ├── validate_finance_inputs.py
-│   └── requirements.txt
-├── cyber/                    ← CYBER
-│   ├── README.md
-│   ├── SECURITY_AUDIT.md
-│   ├── scan_inherited_files.py
-│   ├── robustness_tests.py
-│   ├── bias_check.py
-│   └── requirements.txt
-└── webapp/                   ← DEV WEB (livrable obligatoire)
-    ├── README.md
-    ├── index.html
-    ├── styles.css
-    ├── app.js
-    ├── config.js
-    └── serve.py
+├── README.md
+├── run.sh                          lancement en une commande
+├── docker-compose.yml              déploiement complet via Docker
+├── app/
+│   ├── server.py                   passerelle FastAPI
+│   ├── security.py                 moteur de détection partagé
+│   ├── static/index.html           interface utilisateur
+│   ├── requirements.txt
+│   └── Dockerfile
+├── infra/
+│   ├── Modelfile                   modèle Ollama sécurisé
+│   └── deploy.sh
+├── cyber/
+│   ├── audit_repo.py               scanner IOC
+│   └── robustness_test.py          tests d'attaque
+├── data/
+│   └── analyze_dataset.py          analyse et nettoyage du dataset
+├── medical/
+│   └── medical_lora_finetune.ipynb notebook QLoRA
+└── docs/
+    └── SECURITY_AUDIT.md           audit complet et remédiation
 ```
 
 ---
 
-## Les 5 rôles en détail
+# Démonstration en 1 minute (script)
 
-### INFRA — l'architecte du système (`infra/`)
-Déploie le moteur d'inférence et l'expose à DEV WEB. Choix retenu : **Ollama** (moteur,
-quantization GGUF intégrée) + **passerelle FastAPI** devant (CORS, découplage,
-observabilité). Triton et un serveur maison (vLLM / llama.cpp) sont documentés en
-alternative. Endpoints de la passerelle : `/health`, `/chat` (SSE), `/v1/chat/completions`
-(compatible OpenAI). Configuration via variables : `OLLAMA_BASE_URL`, `MODEL_NAME`,
-`ALLOWED_ORIGINS`, `PORT`.
+1. **0–10 s** : ouvrir `docs/SECURITY_AUDIT.md`, puis lancer :
 
-### IA — le spécialiste modèles (`ia/`)
-1. **Valide** Phi-3.5-Financial via la passerelle → `validation_report.md` (latence,
-   débit, réussite par test).
-2. **Documente** les réglages d'inférence (balayage de température, voir
-   `inference_params.md`).
-3. **Fine-tune** un modèle médical en **QLoRA 4-bit** (`finetune_lora_medical.py`,
-   Colab GPU) puis le teste. **Base par défaut** : `microsoft/Phi-3.5-mini-instruct`
-   (configurable). Exercice de R&D — **pas de production, pas d'avis médical.**
+   ```bash
+   python cyber/audit_repo.py ../hackathon_ynov
+   ```
 
-### DATA — l'expert données (`data/`)
-1. **Prépare et nettoie** le dataset `ruslanmv/ai-medical-chatbot` → `medical_chat.jsonl`
-   (format chat) + `quality_report.md`. Nettoyage : normalisation des espaces, rejet des
-   entrées vides / trop courtes / trop longues, déduplication exacte, comptage des PII
-   (email / téléphone).
-2. **Valide les entrées** du modèle financier (vide, très long, caractères de contrôle,
-   unicode, injection basique) et transmet les cas sensibles à CYBER.
+   Résultat : **3 vulnérabilités critiques — FAIL**.
 
-### CYBER — le responsable sécurité (`cyber/`)
-Outils **défensifs**, qui auditent notre propre déploiement :
-- `scan_inherited_files.py` — audit **statique, lecture seule** des fichiers hérités
-  (secrets, `exec`/`eval`, pickle, base64, URLs/IP, entropie). **N'exécute jamais** le
-  code analysé.
-- `robustness_tests.py` — sondes d'injection de prompt, d'extraction du prompt système,
-  de refus.
-- `bias_check.py` — détection de biais par prompts appariés.
-- `SECURITY_AUDIT.md` — checklist et modèle de menace.
+   > « L'équipe précédente a implanté une porte dérobée. Voici la preuve. »
 
-### DEV WEB — le développeur interface (`webapp/`)
-Interface de chat **temps réel**, sans framework (HTML/CSS/JS pur, rien à compiler).
-Fonctionnalités : streaming token par token, conversation multi-tours, bandeau d'état
-relié à `/health`, **rendu Markdown sûr** (HTML échappé, anti-XSS), responsive mobile,
-focus clavier visible, `prefers-reduced-motion` respecté, états d'erreur explicites.
-C'est le **livrable obligatoire** de la mission.
+2. **10–25 s** :
+
+   ```bash
+   bash run.sh
+   ```
+
+   Ouvrir `http://localhost:8500` et montrer le **Trust Center** indiquant *Connecté* et *Protection active*.
+
+3. **25–40 s** :
+   Poser la question :
+
+   > « Explique les intérêts composés avec un exemple. »
+
+   Montrer la réponse générée en streaming.
+
+4. **40–55 s** :
+   Cliquer sur **Demo: try the known backdoor trigger**.
+
+   Le message est immédiatement bloqué, le bouclier devient rouge et une entrée **CRITICAL** apparaît dans le journal.
+
+   > « La porte dérobée est déclenchée… puis immédiatement neutralisée. Aucune donnée ne quitte le système. »
+
+5. **55–60 s** :
+
+   ```bash
+   python cyber/robustness_test.py
+   ```
+
+   Résultat : **8 tests sur 8 réussis**.
 
 ---
 
-## Configuration du backend (côté interface)
+# Remarques
 
-Tout est dans `webapp/config.js` :
-
-| `mode` | Pour quoi | Détail |
-|---|---|---|
-| `gateway` (défaut) | passerelle INFRA | streaming SSE via `/chat` |
-| `openai` | vLLM / llama.cpp / `/v1` de la passerelle | `/v1/chat/completions` |
-| `ollama` | Ollama en direct | nécessite `OLLAMA_ORIGINS=*` côté serveur |
-
-Adaptez `gatewayBaseUrl` à l'URL/port fournis par INFRA (par ex. une URL ngrok si le
-moteur tourne sur Colab ou une autre machine).
-
----
-
-## Endpoints de la passerelle
-
-| Méthode | Chemin | Rôle |
-|---|---|---|
-| `GET` | `/health` | statut, backend, modèle chargé, modèles disponibles |
-| `POST` | `/chat` | chat **streaming SSE** (utilisé par l'interface) |
-| `POST` | `/v1/chat/completions` | **compatible OpenAI** (drop-in pour clients existants) |
-
----
-
-## Tests
-
-```bash
-# IA — valider le modèle financier déployé
-cd ia && python validate_phi3_financial.py --backend gateway --url http://localhost:8080
-
-# DATA — préparer le dataset (échantillon)
-cd data && python prepare_medical_dataset.py --max-samples 5000 --out-dir ./prepared
-
-# CYBER — audit + robustesse + biais
-cd cyber && python scan_inherited_files.py --path ../ --out cyber_scan_report.md
-python robustness_tests.py --url http://localhost:8080
-python bias_check.py --url http://localhost:8080
-```
-
----
-
-## Stratégie de push GitHub (équipe)
-
-Deux options, au choix de l'équipe :
-
-- **Recommandé** — une personne pousse le projet complet comme base du dépôt, puis chacun
-  travaille sur **son dossier** de rôle. Évite les conflits sur les fichiers racine
-  (`README.md`, `.gitignore`).
-- **Par rôle** — chacun décompresse le ZIP de son rôle à la racine et pousse son dossier
-  (coordonnez-vous pour qu'**une seule** personne pousse les fichiers racine partagés).
-
----
-
-## Avertissements
-
-- Le **modèle médical** est **expérimental, R&D uniquement — ce n'est pas un avis
-  médical** et il ne doit pas être déployé en production.
-- L'assistant financier **n'est pas un conseiller financier agréé** ; pour toute décision
-  d'investissement personnelle, consulter un professionnel.
-- Les **poids du modèle fourni** ne sont pas dans le dépôt (voir `.gitignore`) : ne les
-  committez pas.
-
----
-
-## Sources vérifiables
-
-- Dataset médical : <https://huggingface.co/datasets/ruslanmv/ai-medical-chatbot>
-  (~256 916 lignes ; colonnes `Description / Patient / Doctor` ; licence CC-BY 4.0).
-- Ollama : <https://ollama.com> (API locale, port 11434).
-- Base par défaut du fine-tuning médical : <https://huggingface.co/microsoft/Phi-3.5-mini-instruct>
-  (configurable — à remplacer si le hackathon impose une autre base).
-
-> Sur « Phi-3.5-Financial » précisément : aucune fiche modèle publique ne porte
-> exactement ce nom (vérifié). C'est le modèle **fourni** par l'épreuve ; le code reste
-> agnostique grâce à `MODEL_NAME`.
+* Les fichiers volumineux du dépôt d'origine (`datasets/*.json`, `models/*.safetensors`) sont stockés avec **Git LFS**. Exécutez `git lfs pull` afin de les récupérer avant toute analyse.
+* Cet assistant est fourni à des fins pédagogiques uniquement. Il **n'a accès à aucun système ni à aucune donnée réelle de TechCorp**.
+* Si vous identifiez un nouveau motif de détection, ajoutez-le dans `app/security.py`. Tous les autres composants utiliseront automatiquement cette nouvelle règle.
