@@ -24,29 +24,6 @@ membre de l'équipe travaille et pousse sa partie.
 
 ---
 
-## ⚠️ À lire en premier — honnêteté technique
-
-Ce dépôt contient **tout le code, les scripts et la documentation** nécessaires à la
-mission. Il ne contient **pas** :
-
-- **les poids du modèle** — « Phi-3.5-Financial » est le modèle **fourni par le
-  hackathon** (à placer dans `models/phi3_financial/`). Ce **n'est pas un modèle public
-  standard** : vérification faite, aucun modèle HuggingFace ne porte exactement ce nom.
-  Tout le code le référence via la variable d'environnement `MODEL_NAME` — **rien n'est
-  codé en dur** vers un modèle supposé ;
-- **un serveur déjà en ligne** — chaque équipe lance les services sur sa propre machine
-  ou sur Colab Pro (le code n'a pas été exécuté sur un vrai GPU lors de la rédaction).
-
-**Ce qui a été vérifié / testé :**
-- Dataset médical `huggingface.co/datasets/ruslanmv/ai-medical-chatbot` : ~256 916 lignes,
-  format parquet, colonnes `Description / Patient / Doctor`, licence CC-BY 4.0. Statut :
-  **expérimental** (non destiné à la production, indiqué par l'auteur du dataset).
-- La chaîne **interface → passerelle → moteur** a été testée en intégration avec un faux
-  serveur Ollama : les endpoints `/health`, `/chat` (streaming SSE) et
-  `/v1/chat/completions` répondent correctement.
-
----
-
 ## Prérequis
 
 | Outil | Pour quoi | Note |
